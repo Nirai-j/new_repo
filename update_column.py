@@ -1,0 +1,337 @@
+import streamlit as st
+import pandas as pd
+from snowflake.snowpark.context import get_active_session
+
+# Get active Snowflake session
+session = get_active_session()
+#st.set_page_config(layout="wide")
+st.title("Dataset Upload and Filter App")
+if 'df' not in st.session_state:
+    st.session_state.df = None
+    st.session_state.filters = []
+    st.session_state.filter_cols = []
+    st.session_state.new_file_uploaded = False
+    st.session_state.uploaded_file_name = None  # Initialize to None
+    st.session_state.editor=None
+    st.session_state.filtered_df=pd.DataFrame()
+    
+# Retrieve list of databases
+resultdb = session.sql("show DATABASEs").collect()
+databases = [row["name"] for row in resultdb]
+
+# Select database
+selected_db = st.selectbox("Select a database", databases)
+
+if selected_db:
+    # Retrieve list of schemas
+    resultschema = session.sql(f"show SCHEMAS in database {selected_db}").collect()
+    schemas = [row["name"] for row in resultschema]
+
+    # Select schema
+    selected_schema = st.selectbox("Select a schema", schemas)
+
+    if selected_schema:
+        # Retrieve list of tables and views
+        resulttable = session.sql(f"SELECT table_name FROM {selected_db}.information_schema.tables WHERE table_schema='{selected_schema}'").collect()
+        resulttable
+        tables_and_views = [row["TABLE_NAME"] for row in resulttable]
+        selected = st.selectbox("Select the table or view",options=tables_and_views)
+        if selected:
+            uploaded_file_name=f"{selected_db}+{selected_schema}+{selected}"
+            df = session.sql(f"select * from {selected_db}.{selected_schema}.{selected}").to_pandas()
+            if st.session_state.uploaded_file_name != uploaded_file_name:
+                st.session_state.df = df
+                st.session_state.editor=None
+                st.session_state.filtered_df=pd.DataFrame()
+                st.session_state.filter_cols = list(df.columns)
+                st.session_state.new_file_uploaded = True
+                st.session_state.uploaded_file_name = uploaded_file_name
+                st.session_state.filters = []  # Reset filters here.
+            else:
+                st.session_state.new_file_uploaded = False
+
+# Function to update filtered_df (call this after df changes)
+def update_filtered_df():
+    unique_column = st.session_state.df.columns[0]
+    if st.session_state.df is not None and not st.session_state.df.empty:
+        # st.session_state.filtered_df = st.session_state.df[st.session_state.df[unique_column].isin(st.session_state.filtered_df[unique_column])].copy()
+        # Apply filtering logic here based on st.session_state.filters
+        # For this example, let's assume no filtering is applied
+        st.session_state.filtered_df = st.session_state.df.copy()
+    else:
+        st.session_state.filtered_df = pd.DataFrame()
+
+def create_html_table_with_frozen_column(df):
+    html = """
+    <style>
+    .table-container {
+        width: 100%; /* Or a specific width if you want to limit horizontal size as well */
+        overflow-x: auto; /* Enable horizontal scrolling if needed */
+        max-height: 500px; /* Limit the vertical size of the table */
+        overflow-y: auto; /* Enable vertical scrolling */
+    }
+    table {
+        width: max-content;
+        border-collapse: collapse;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 8px;
+        text-align: left;
+        white-space: nowrap;
+    }
+    .frozen {
+        position: sticky;
+        left: 0;
+        background-color: white;
+        z-index: 1; /* Ensure the frozen column is on top */
+    }
+    .frozen-cell {
+    border-left: 2px solid rgba(0,0,0,3);
+    border-right: 2px solid rgba(0,0,0,3) !important; /* Increased thickness and made it red */
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+    }
+    th, td { /* Style for all cells to make borders more visible */
+        border: 1px solid black;
+    }
+    </style>
+    <div class="table-container">
+    <table>
+        <thead>
+            <tr>
+    """
+    for col in df.columns:
+        if col == df.columns[0]:
+            html += f"<th class='frozen'>{col}</th>"
+        else:
+            html += f"<th>{col}</th>"
+    html += """
+            </tr>
+        </thead>
+        <tbody>
+    """
+    for index, row in df.iterrows():
+        html += "<tr>"
+        for i, col in enumerate(df.columns):
+            if col == df.columns[0]:
+                html += f"<td class='frozen frozen-cell'>{row[col]}</td>"
+            else:
+                html += f"<td>{row[col]}</td>"
+        html += "</tr>"
+    html += """
+        </tbody>
+    </table>
+    </div>
+    """
+    return html
+
+tab1, tab2, tab3 = st.tabs(["Filter", "Alter", "Update"])
+with tab1:
+    if st.session_state.df is not None:
+        st.subheader("Original Dataset")
+        st.write(df.dtypes)
+        if 'RAW' not in st.session_state.df.columns:    
+            #html_table = create_html_table_with_frozen_column(st.session_state.df)
+            #st.markdown(html_table, unsafe_allow_html=True)
+            st.write(st.session_state.df)
+        
+            if st.button("Add Filter"):
+                st.session_state.filters.append({"column": "", "value": "", "operator": ""})
+            with st.container(border=True):
+                for i, filter in enumerate(st.session_state.filters):
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        filter['column'] = st.selectbox(f"Select Column {i+1}", options=st.session_state.filter_cols, key=f"select_col_{i}")
+                    with col2:
+                        column_name = filter['column']  # Get column name from the filter dictionary
+            
+                        if column_name and column_name in st.session_state.df.columns: #check to avoid errors if column_name is empty or not in df.
+                          column_series = st.session_state.df[column_name]  # Access the column data (Pandas Series)
+                          if pd.api.types.is_integer_dtype(column_series):
+                              filter['operator'] = st.selectbox(f"Operator {i+1}", options=["==", "!=", ">", "<", ">=", "<="], key=f"operator_{i}")
+                          elif pd.api.types.is_float_dtype(column_series):
+                              filter['operator'] = st.selectbox(f"Operator {i+1}", options=["==", "!=", ">", "<", ">=", "<="], key=f"operator_{i}")
+                          elif pd.api.types.is_object_dtype(column_series):
+                              filter['operator'] = st.selectbox(f"Operator {i+1}", options=["contains", "starts with", "ends with", "equals"], key=f"operator_{i}")
+                          elif pd.api.types.is_datetime64_any_dtype(pd.to_datetime(column_series, errors='coerce')):
+                              filter['operator'] = st.selectbox(f"Operator {i+1}", options=["start date", "end date", "between dates"], key=f"operator_{i}")
+                          else:
+                              filter['operator'] = st.selectbox(f"Operator {i+1}", options=["==", "!=", ">", "<", ">=", "<="], key=f"operator_{i}")
+                    with col3:
+                        filter['value'] = st.text_input(f"Enter value to filter by for column {filter['column']}", key=f"filter_value_{i}")
+                        if i<len(st.session_state.filters)-1:
+                            st.divider()
+                        
+    if st.button("Apply Filters"):
+        if isinstance(st.session_state.df, pd.DataFrame):
+            filtered_df = st.session_state.df.copy()
+        else:
+            st.write("Error: st.session_state.df is not a DataFrame.")
+        
+        
+        for i,filter in enumerate(st.session_state.filters):
+            column = filter['column']
+            operator = filter['operator']
+            value = filter['value']
+    
+            if column and value:
+                if pd.api.types.is_integer_dtype(filtered_df[column]):
+                    try:
+                        value = int(value)
+                        if operator == "==":
+                            filtered_df = filtered_df[filtered_df[column] == value]
+                        elif operator == "!=":
+                            filtered_df = filtered_df[filtered_df[column] != value]
+                        elif operator == ">":
+                            filtered_df = filtered_df[filtered_df[column] > value]
+                        elif operator == "<":
+                            filtered_df = filtered_df[filtered_df[column] < value]
+                        elif operator == ">=":
+                            filtered_df = filtered_df[filtered_df[column] >= value]
+                        elif operator == "<=":
+                            filtered_df = filtered_df[filtered_df[column] <= value]
+                    except ValueError:
+                        st.error(f"Invalid integer value for column {column}")
+    
+                elif pd.api.types.is_float_dtype(filtered_df[column]):
+                    try:
+                        value = float(value)
+                        if operator == "==":
+                            filtered_df = filtered_df[filtered_df[column] == value]
+                        elif operator == "!=":
+                            filtered_df = filtered_df[filtered_df[column] != value]
+                        elif operator == ">":
+                            filtered_df = filtered_df[filtered_df[column] > value]
+                        elif operator == "<":
+                            filtered_df = filtered_df[filtered_df[column] < value]
+                        elif operator == ">=":
+                            filtered_df = filtered_df[filtered_df[column] >= value]
+                        elif operator == "<=":
+                            filtered_df = filtered_df[filtered_df[column] <= value]
+                    except ValueError:
+                        st.error(f"Invalid float value for column {column}")
+                
+                elif pd.api.types.is_datetime64_any_dtype(filtered_df[column]):
+                    try:
+                        st.write(pd.api.types.is_datetime64_any_dtype(filtered_df[column]))
+                        if operator in ["start date", "end date", "between dates"]:
+                            if operator == "between dates":
+                                start_date, end_date = value.split(',')
+                                start_date = pd.to_datetime(start_date.strip())
+                                end_date = pd.to_datetime(end_date.strip())
+                                filtered_df = filtered_df[(filtered_df[column] >= start_date) & (filtered_df[column] <= end_date)]
+                            elif operator == "start date":
+                                value = pd.to_datetime(value)
+                                filtered_df = filtered_df[filtered_df[column] >= value]
+                            elif operator == "end date":
+                                value = pd.to_datetime(value)
+                                filtered_df = filtered_df[filtered_df[column] <= value]
+                        else:
+                            value = pd.to_datetime(value)
+                            if operator == "==":
+                                filtered_df = filtered_df[filtered_df[column] == value]
+                            elif operator == "!=":
+                                filtered_df = filtered_df[filtered_df[column] != value]
+                            elif operator == ">":
+                                filtered_df = filtered_df[filtered_df[column] > value]
+                            elif operator == "<":
+                                filtered_df = filtered_df[filtered_df[column] < value]
+                            elif operator == ">=":
+                                filtered_df = filtered_df[filtered_df[column] >= value]
+                            elif operator == "<=":
+                                filtered_df = filtered_df[filtered_df[column] <= value]
+    
+                    except ValueError:
+                        st.error(f"Invalid date value for column {column}")
+    
+                elif pd.api.types.is_object_dtype(filtered_df[column]):
+                    if operator == "contains":
+                        filtered_df = filtered_df[filtered_df[column].str.contains(value, case=False, na=False)]
+                    elif operator == "starts with":
+                        filtered_df = filtered_df[filtered_df[column].str.startswith(value, na=False)]
+                    elif operator == "ends with":
+                        filtered_df = filtered_df[filtered_df[column].str.endswith(value, na=False)]
+                    elif operator == "equals":
+                        filtered_df = filtered_df[filtered_df[column] == value]
+                    elif operator == "==":
+                        filtered_df = filtered_df[filtered_df[column] == value]
+                    elif operator == "!=":
+                        filtered_df = filtered_df[filtered_df[column] != value]
+            
+        st.divider()
+        st.subheader("Filtered Dataset")
+        st.write(filtered_df)
+        st.session_state.filtered_df=filtered_df
+        downloaded_file = filtered_df.to_csv(index=False).encode()  # Convert to CSV and encode to bytes
+        # Create the download button
+        st.download_button(
+            label="Download data as CSV",
+            data=downloaded_file,
+            file_name='my_data.csv',
+            mime='text/csv'
+        )
+with tab2:
+    @st.dialog("Are you sure to update this Table")
+    def update():
+        if st.button("Submit"):
+            st.session_state.df = st.session_state.editor
+            update_filtered_df()  # Update filtered_df after df changes
+
+        
+    if st.session_state.filtered_df is not None and not st.session_state.filtered_df.empty:
+        # DataFrame is not None and not empty
+        
+        st.session_state.editor = st.data_editor(st.session_state.filtered_df)  # Use df here
+        if st.button("Confirm"):
+            update()
+    else:
+        st.write(st.session_state.df)
+
+# def main_table_update():
+    
+        
+with tab3:
+    flag=0
+    if st.session_state.filtered_df is not None and not st.session_state.filtered_df.empty:
+        copy_df=st.session_state.filtered_df.copy()
+        flag=1
+    else:
+        copy_df=st.session_state.df.copy()
+    st.write(copy_df)
+    unique_column = copy_df.columns[0]
+    row_index = st.selectbox("Select a row:", copy_df[unique_column])
+    selected_row = copy_df[copy_df[unique_column] == row_index]
+
+    # Display the selected row
+    st.write(selected_row)
+
+    if row_index is not None:
+        with st.container(border=True):  # Assuming you have a way to style the container
+            st.subheader("Update Values")
+            # Display values as read-only text inputs
+            # for col in st.session_state.df.columns:
+            st.text_input(f"Data:", value=str(selected_row[unique_column].values[0]),
+                         disabled=True)
+
+            # Determine the column to update
+            update_column = st.selectbox("Select column to update", st.session_state.df.columns)
+
+            value = st.text_input("New Value:")
+
+            if st.button('Update'):
+                try:
+                    # Update the DataFrame in session state
+                    st.session_state.df.loc[st.session_state.df[unique_column] == row_index, update_column] = value
+                    # if st.session_state.filtered_df is not None and not st.session_state.filtered_df.empty:
+                    #     st.session_state.filtered_df.loc[st.session_state.df[unique_column] == row_index, update_column] = value
+                    if flag==1:
+                        update_filtered_df()  # Update filtered_df after df changes
+                    st.success("DataFrame updated!")
+                    # Display the updated dataframe.
+                    st.subheader("Updated Dataframe")
+                    st.write(st.session_state.df)
+                    # final_update(unique_column,row_index,value)
+                except Exception as e:
+                    st.error(f"An error occurred during update: {e}")
+    else:
+        st.write(st.session_state.df)
