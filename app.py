@@ -64,8 +64,6 @@ def set_fun_pink_gradient_background():
 # Apply the fun pink gradient background
 set_fun_pink_gradient_background()
 
-#print("Appled gradient background")
-print("Appled gradient background")
 
 # Updated Theme CSS for Streamlit elements - Revised Selectors and Color Scheme
 streamlit_theme = f"""
