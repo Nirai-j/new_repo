@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import streamlit.components.v1 as components
 from snowflake.snowpark.context import get_active_session
 
 # Get active Snowflake session
@@ -35,13 +36,17 @@ colors = {
     "dark_pink": "#C2185B",          # Dark Pink - Strong accents, borders
     "off_white": "#F8F8FF",         # Off-White -  Alternative light background
     "text_on_light": "#333333",     # Dark Gray - Text on light backgrounds
-    "text_on_dark": "#FFFFFF"       # White - Text on dark backgrounds
+    "text_on_dark": "#FFFFFF",
+    'light_pink_1': '#FFE4E1',  # Light Rose
+    'light_pink_2': '#FFECF0',  # Very Light Pink
+    'peach_pink': '#FFE5B4',   # Peach Pink (subtle warm tone)
+    'off_white': '#F8F8FF'     # Almost White# White - Text on dark backgrounds
 }
 
 
-def set_pink_gradient_background():
+def set_fun_pink_gradient_background():
     gradient = f"""
-        linear-gradient(to bottom, {colors['light_pink']}, {colors['off_white']})
+        linear-gradient(135deg, {colors['light_pink_1']}, {colors['light_pink_2']}, {colors['peach_pink']}, {colors['off_white']})
     """
     st.markdown(
         f"""
@@ -49,15 +54,15 @@ def set_pink_gradient_background():
         .stApp {{
             background-image: {gradient};
             background-attachment: fixed;
-            color: {colors['text_on_light']}; /* Default text color */
+            color: #333333; /* Default text color */
         }}
         </style>
         """,
         unsafe_allow_html=True,
     )
 
-# Apply the pink gradient background
-set_pink_gradient_background()
+# Apply the fun pink gradient background
+set_fun_pink_gradient_background()
 
 
 # Updated Theme CSS for Streamlit elements - Revised Selectors and Color Scheme
@@ -150,6 +155,7 @@ div.stButton > button:hover {{
     padding: 8px;
 }}
 
+/* Selectbox */
 /* Selectbox */
 .stSelectbox > div > div > div {{
     background-color: {colors['light_lavender']};
@@ -265,7 +271,8 @@ def update_filtered_df():
     else:
         st.session_state.filtered_df = pd.DataFrame()
 
-def create_html_table_with_frozen_column(df):
+
+def create_html_table_with_frozen_columns(df):
     html = """
     <style>
     .table-container {
@@ -275,70 +282,121 @@ def create_html_table_with_frozen_column(df):
         overflow-y: auto;
     }
     table {
-        width: max-content;
         border-collapse: collapse;
+        width: max-content;
     }
     th, td {
-        border: 1px solid black;
+        border: 1px solid #ddd;
         padding: 8px;
-        text-align: left;
         white-space: nowrap;
     }
-    .frozen {
+    th {
+        background-color: #C2A1CE;
+        color: black;
+        font-weight: bold;
+        position: sticky;
+        top: 0;
+    }
+    .first-col {
         position: sticky;
         left: 0;
+        z-index: 10;
+        min-width: 0;
+    }
+    .second-col {
+        position: sticky;
+        left: 0;
+        z-index: 9;
+        min-width: 0;
+    }
+    th.first-col {
+        z-index: 12;
+    }
+    th.second-col {
+        z-index: 11;
+    }
+    tbody .first-col {
         background-color: white;
-        z-index: 2; /* Increased z-index */
     }
-    .frozen-cell {
-        border-right: 1px solid black !important; /* Simplified and made black */
-        border-right: 1px solid black
-        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2); /* Shadow on the right */
-    }
-    th, td {
-        border: 1px solid black;
+    tbody .second-col {
+        background-color: white;
     }
     </style>
     <div class="table-container">
-    <table>
-        <thead>
-            <tr>
+        <table id="dataTable">
+            <thead>
+                <tr>
     """
-    for col in df.columns:
-        if col == df.columns[0]:
-            html += f"<th class='frozen'>{col}</th>"
+    for i, col in enumerate(df.columns):
+        if i == 0:
+            html += f'<th class="first-col">{col}</th>'
+        elif i == 1:
+            html += f'<th class="second-col">{col}</th>'
         else:
-            html += f"<th>{col}</th>"
+            html += f'<th>{col}</th>'
     html += """
-            </tr>
-        </thead>
-        <tbody>
+                </tr>
+            </thead>
+            <tbody>
     """
-    for index, row in df.iterrows():
+    for _, row in df.iterrows():
         html += "<tr>"
         for i, col in enumerate(df.columns):
-            if col == df.columns[0]:
-                html += f"<td class='frozen frozen-cell'>{row[col]}</td>"
+            if i == 0:
+                html += f'<td class="first-col">{row[col]}</td>'
+            elif i == 1:
+                html += f'<td class="second-col">{row[col]}</td>'
             else:
-                html += f"<td>{row[col]}</td>"
+                html += f'<td>{row[col]}</td>'
         html += "</tr>"
     html += """
-        </tbody>
-    </table>
+            </tbody>
+        </table>
     </div>
+    <script>
+    function updateColumnWidths() {
+        const firstCols = document.querySelectorAll('.first-col');
+        const secondCols = document.querySelectorAll('.second-col');
+
+        let maxFirstWidth = 0;
+        firstCols.forEach(cell => {
+            maxFirstWidth = Math.max(maxFirstWidth, cell.offsetWidth);
+        });
+
+        let maxSecondWidth = 0;
+        secondCols.forEach(cell => {
+            maxSecondWidth = Math.max(maxSecondWidth, cell.offsetWidth);
+        });
+
+        firstCols.forEach(cell => {
+            cell.style.minWidth = maxFirstWidth + 'px';
+        });
+
+        secondCols.forEach(cell => {
+            cell.style.minWidth = maxSecondWidth + 'px';
+            cell.style.left = (maxFirstWidth + 14) + 'px'; // Add a 1px buffer
+        });
+    }
+
+    window.addEventListener('load', updateColumnWidths);
+    window.addEventListener('resize', updateColumnWidths);
+    </script>
     """
     return html
 
-tab1, tab2, tab3 = st.tabs(["Filter", "Alter", "Update"])
+
+tab1, tab2, tab3 = st.tabs(["Filter", "Update", "Alter"])
 with tab1:
     if st.session_state.df is not None:
         st.subheader("Original Dataset")
         st.write(df.dtypes)
         if 'RAW' not in st.session_state.df.columns:    
-            html_table = create_html_table_with_frozen_column(st.session_state.df)
-            st.markdown(html_table, unsafe_allow_html=True)
+            html_table = create_html_table_with_frozen_columns(st.session_state.df)
+            components.html(html_table, height=500)
+            #st.markdown(html_table, unsafe_allow_html=True)
             #st.write(st.session_state.df)
-        
+            # st.write("");
+            # st.write("");
             if st.button("Add Filter"):
                 st.session_state.filters.append({"column": "", "value": "", "operator": ""})
             with st.container(border=True):
@@ -366,7 +424,7 @@ with tab1:
                         if i<len(st.session_state.filters)-1:
                             st.divider()
                         
-    if st.button("Apply Filters"):
+    if st.session_state.filters != [] and st.button("Apply Filters"):
         if isinstance(st.session_state.df, pd.DataFrame):
             filtered_df = st.session_state.df.copy()
         else:
@@ -469,7 +527,7 @@ with tab1:
         downloaded_file = filtered_df.to_csv(index=False).encode()  # Convert to CSV and encode to bytes
         # Create the download button
         st.download_button(
-            label="Download data as CSV",
+            label="Download",
             data=downloaded_file,
             file_name='my_data.csv',
             mime='text/csv'
@@ -541,8 +599,16 @@ with tab2:
                     st.success("DataFrame updated!")
                     # Display the updated dataframe.
                     st.subheader("Updated Dataframe")
-                    st.write(st.session_state.df)
                     main_table_update(update_column,unique_column,row_index,value)
+                    st.write(st.session_state.df)
+                    downloaded_file = filtered_df.to_csv(index=False).encode()  # Convert to CSV and encode to bytes
+                    # Create the download button
+                    st.download_button(
+                        label="Download",
+                        data=downloaded_file,
+                        file_name='my_data.csv',
+                        mime='text/csv'
+                    )
                 except Exception as e:
                     st.error(f"An error occurred during update: {e}")
     else:

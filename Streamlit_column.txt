@@ -5,216 +5,15 @@ from snowflake.snowpark.context import get_active_session
 # Get active Snowflake session
 session = get_active_session()
 #st.set_page_config(layout="wide")
-st.set_page_config(
-    page_title="My Awesome App",
-    page_icon="🚀",
-    layout="wide", # or "centered"
-    #layout="centered",
-    initial_sidebar_state="collapsed", # or "expanded"
-    menu_items={
-        'Get Help': 'https://www.extremelycoolapp.com/help',
-        'Report a bug': "https://www.extremelycoolapp.com/bug",
-        'About': "# This is a header. This is an *extremely* cool app!"
-    }
-)
-
-# Revised Color Palette (Purple and Lavender focused)
-colors = {
-    "dark_purple": "#0D0221",      # Dark Purple - Primary text, borders
-    "medium_purple": "#4B0082",    # Medium Purple - Header backgrounds, accents
-    "lavender": "#E6E6FA",        # Lavender -  Light backgrounds, containers
-    "light_lavender": "#F0F0FF",   # Very Light Lavender -  Even lighter backgrounds
-    "pale_lavender": "#F8F8FF",    # Pale Lavender -  Subtle backgrounds
-    "accent_color": "#6A5ACD",     # Slate Blue - Button accents, highlights
-    "text_on_light": "#333333",    # Dark Gray - Text on light backgrounds
-    "text_on_dark": "#FFFFFF",  # White - Text on dark backgrounds
-    "light_pink": "#FCE4EC",       # Light Pink - Very light background
-    "pale_pink": "#F9A8D4",        # Pale Pink - Light background, containers
-    "medium_pink": "#F48FB1",       # Medium Pink - Accents, headers
-    "deep_pink": "#EC407A",         # Deep Pink - Buttons, interactive elements
-    "dark_pink": "#C2185B",          # Dark Pink - Strong accents, borders
-    "off_white": "#F8F8FF",         # Off-White -  Alternative light background
-    "text_on_light": "#333333",     # Dark Gray - Text on light backgrounds
-    "text_on_dark": "#FFFFFF"       # White - Text on dark backgrounds
-}
-
-
-def set_pink_gradient_background():
-    gradient = f"""
-        linear-gradient(to bottom, {colors['light_pink']}, {colors['off_white']})
-    """
-    st.markdown(
-        f"""
-        <style>
-        .stApp {{
-            background-image: {gradient};
-            background-attachment: fixed;
-            color: {colors['text_on_light']}; /* Default text color */
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-# Apply the pink gradient background
-set_pink_gradient_background()
-
-
-# Updated Theme CSS for Streamlit elements - Revised Selectors and Color Scheme
-streamlit_theme = f"""
-<style>
-/* General body text */
-body {{
-    color: {colors['text_on_light']};
-    font-family: sans-serif; /* Example: Use sans-serif for general text */
-}}
-
-/* Headers: Using medium purple for prominence */
-h1, h2, h3, h4, h5, h6 {{
-    color: {colors['medium_purple']};
-    font-weight: bold;
-    margin-bottom: 0.5em;
-}}
-
-/* Containers: Light lavender background with border */
-.stApp .stContainer {{
-    background-color: {colors['lavender']};
-    border: 1px solid {colors['medium_purple']};
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 2px 2px 10px rgba(0,0,0,0.05); /* Subtle shadow */
-}}
-
-/* Buttons - Slate blue with light text */
-div.stButton > button:first-child {{
-    background-color: {colors['accent_color']};
-    color: {colors['text_on_dark']};
-    border: 1px solid {colors['medium_purple']};
-    border-radius: 25px; /* Rounded buttons */
-    padding: 10px 25px;
-    font-weight: bold;
-}}
-
-div.stButton > button:hover {{
-    background-color: {colors['medium_purple']};
-    color: white;
-    border-color: {colors['dark_purple']};
-}}
-
-/* Tabs */
-.stTabs [data-baseweb="tab-list"] > div {{
-    background-color: {colors['medium_purple']}; /* Darker tab header */
-    border-bottom: 2px solid {colors['dark_purple']};
-    padding: 0 10px;
-    border-radius: 8px 8px 0 0;
-}}
-
-.stTabs [data-baseweb="tab-list"] button {{
-    color: {colors['text_on_dark']}; /* Light text on tab headers */
-    background-color: {colors['medium_purple']};
-    padding: 10px 15px;
-    border-radius: 8px 8px 0 0;
-    margin-right: 2px;
-    font-weight: bold;
-}}
-
-.stTabs [data-baseweb="tab-list"] button:hover {{
-    background-color: {colors['accent_color']};
-    color: {colors['text_on_dark']};
-}}
-
-.stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {{
-    background-color: {colors['lavender']}; /* Selected tab content background */
-    color: {colors['text_on_light']}; /* Dark text on selected tab */
-    font-weight: bold;
-    border-bottom: none; /* Remove bottom border of selected tab */
-}}
-
-.stTabs [data-baseweb="tab-content"] {{
-    background-color: {colors['lavender']}; /* Tab content area */
-    padding: 20px;
-    border-radius: 0 8px 8px 8px; /* Rounded corners for content area */
-    border: 1px solid {colors['medium_purple']};
-}}
-
-
-/* Text Input and Text Area */
-.stTextInput > div > div > input,
-.stTextArea > div > div > textarea,
-.stNumberInput > div > div > input {{ /* Added NumberInput */
-    background-color: {colors['light_lavender']};
-    color: {colors['text_on_light']};
-    border: 1px solid {colors['medium_purple']};
-    border-radius: 5px;
-    padding: 8px;
-}}
-
-/* Selectbox */
-.stSelectbox > div > div > div {{
-    background-color: {colors['light_lavender']};
-    color: {colors['text_on_light']};
-    border: 1px solid {colors['medium_purple']};
-    border-radius: 5px;
-    padding: 8px;
-}}
-.stSelectbox > div > div > div:focus,
-.stSelectbox > div > div > div:active {{
-    border-color: {colors['accent_color']};
-    box-shadow: 0 0 0 0.2rem rgba(106, 90, 205, 0.25); /* Accent color shadow */
-}}
-
-
-/* Dataframe */
-.ag-theme-streamlit {{
-    background-color: {colors['lavender']};
-    color: {colors['text_on_light']};
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid {colors['medium_purple']};
-}}
-
-.ag-theme-streamlit .ag-header {{
-    background-color: {colors['medium_purple']};
-    color: {colors['text_on_dark']};
-    border-bottom: 2px solid {colors['dark_purple']};
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-}}
-
-.ag-theme-streamlit .ag-header-cell-text {{
-    color: {colors['text_on_dark']} !important;
-    font-weight: bold;
-}}
-
-.ag-theme-streamlit .ag-row-odd,
-.ag-theme-streamlit .ag-row-even {{
-    color: {colors['text_on_light']};
-}}
-
-.ag-theme-streamlit .ag-root-wrapper {{
-    border-radius: 0 0 8px 8px;
-    overflow: hidden;
-}}
-
-</style>
-"""
-
-st.markdown(streamlit_theme, unsafe_allow_html=True)
-
 st.title("Dataset Upload and Filter App")
 if 'df' not in st.session_state:
     st.session_state.df = None
-    st.session_state.selected_db=None
-    st.session_state.selected_schema=None
-    st.session_state.selected_table=None
     st.session_state.filters = []
     st.session_state.filter_cols = []
     st.session_state.new_file_uploaded = False
     st.session_state.uploaded_file_name = None  # Initialize to None
     st.session_state.editor=None
-    st.session_state.filtered_df=pd.DataFrame()
-    st.session_state.update_query=None
+    st.session_state.filtered_df=None
     
 # Retrieve list of databases
 resultdb = session.sql("show DATABASEs").collect()
@@ -241,12 +40,9 @@ if selected_db:
             uploaded_file_name=f"{selected_db}+{selected_schema}+{selected}"
             df = session.sql(f"select * from {selected_db}.{selected_schema}.{selected}").to_pandas()
             if st.session_state.uploaded_file_name != uploaded_file_name:
-                st.session_state.selected_db=selected_db;
-                st.session_state.selected_schema=selected_schema;
-                st.session_state.selected_table=selected;
                 st.session_state.df = df
                 st.session_state.editor=None
-                st.session_state.filtered_df=pd.DataFrame()
+                st.session_state.filtered_df=None
                 st.session_state.filter_cols = list(df.columns)
                 st.session_state.new_file_uploaded = True
                 st.session_state.uploaded_file_name = uploaded_file_name
@@ -254,25 +50,15 @@ if selected_db:
             else:
                 st.session_state.new_file_uploaded = False
 
-# Function to update filtered_df (call this after df changes)
-def update_filtered_df():
-    unique_column = st.session_state.df.columns[0]
-    if st.session_state.df is not None and not st.session_state.df.empty:
-        # st.session_state.filtered_df = st.session_state.df[st.session_state.df[unique_column].isin(st.session_state.filtered_df[unique_column])].copy()
-        # Apply filtering logic here based on st.session_state.filters
-        # For this example, let's assume no filtering is applied
-        st.session_state.filtered_df = st.session_state.df.copy()
-    else:
-        st.session_state.filtered_df = pd.DataFrame()
 
 def create_html_table_with_frozen_column(df):
     html = """
     <style>
     .table-container {
-        width: 100%;
-        overflow-x: auto;
-        max-height: 500px;
-        overflow-y: auto;
+        width: 100%; /* Or a specific width if you want to limit horizontal size as well */
+        overflow-x: auto; /* Enable horizontal scrolling if needed */
+        max-height: 500px; /* Limit the vertical size of the table */
+        overflow-y: auto; /* Enable vertical scrolling */
     }
     table {
         width: max-content;
@@ -288,14 +74,14 @@ def create_html_table_with_frozen_column(df):
         position: sticky;
         left: 0;
         background-color: white;
-        z-index: 2; /* Increased z-index */
+        z-index: 1; /* Ensure the frozen column is on top */
     }
     .frozen-cell {
-        border-right: 1px solid black !important; /* Simplified and made black */
-        border-right: 1px solid black
-        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2); /* Shadow on the right */
+    border-left: 2px solid rgba(0,0,0,3);
+    border-right: 2px solid rgba(0,0,0,3) !important; /* Increased thickness and made it red */
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
     }
-    th, td {
+    th, td { /* Style for all cells to make borders more visible */
         border: 1px solid black;
     }
     </style>
@@ -358,13 +144,12 @@ with tab1:
                           elif pd.api.types.is_object_dtype(column_series):
                               filter['operator'] = st.selectbox(f"Operator {i+1}", options=["contains", "starts with", "ends with", "equals"], key=f"operator_{i}")
                           elif pd.api.types.is_datetime64_any_dtype(pd.to_datetime(column_series, errors='coerce')):
-                              filter['operator'] = st.selectbox(f"Operator {i+1}", options=["start date", "end date"], key=f"operator_{i}")
+                              filter['operator'] = st.selectbox(f"Operator {i+1}", options=["start date", "end date", "between dates"], key=f"operator_{i}")
                           else:
                               filter['operator'] = st.selectbox(f"Operator {i+1}", options=["==", "!=", ">", "<", ">=", "<="], key=f"operator_{i}")
+            
                     with col3:
                         filter['value'] = st.text_input(f"Enter value to filter by for column {filter['column']}", key=f"filter_value_{i}")
-                        if i<len(st.session_state.filters)-1:
-                            st.divider()
                         
     if st.button("Apply Filters"):
         if isinstance(st.session_state.df, pd.DataFrame):
@@ -373,7 +158,7 @@ with tab1:
             st.write("Error: st.session_state.df is not a DataFrame.")
         
         
-        for i,filter in enumerate(st.session_state.filters):
+        for filter in st.session_state.filters:
             column = filter['column']
             operator = filter['operator']
             value = filter['value']
@@ -461,8 +246,8 @@ with tab1:
                         filtered_df = filtered_df[filtered_df[column] == value]
                     elif operator == "!=":
                         filtered_df = filtered_df[filtered_df[column] != value]
-            
-        st.divider()
+        
+        
         st.subheader("Filtered Dataset")
         st.write(filtered_df)
         st.session_state.filtered_df=filtered_df
@@ -474,49 +259,31 @@ with tab1:
             file_name='my_data.csv',
             mime='text/csv'
         )
-
-@st.dialog("Are you make these changes in Final Table?")
-def main_table_update(update_column,unique_column,row_index,value):
-    st.session_state.update_query = f"""
-                UPDATE {st.session_state.selected_db}.{st.session_state.selected_schema}.{st.session_state.selected_table}
-                SET {update_column} = '{value}'
-                WHERE {unique_column} = '{row_index}'
-            """
-    st.code(st.session_state.update_query, language="sql")
-    col1,col2 = st.columns(2)
-    with col1:
-        if st.button("Yes"):
-            try:
-                # **Execute the UPDATE query in Snowflake**
-                # Replace this with your actual Snowflake execution code
-                session.sql(st.session_state.update_query).collect()
-                st.success("Snowflake table updated!")
-            except Exception as e:
-                st.error(f"Error updating Snowflake: {e}")
-            finally:  
-                st.rerun()  # Rerun to clear the dialog
-
-    with col2:
-        if st.button("No"):  
-            st.rerun()  # Rerun to clear the dialog
-        
-        
-        
 with tab2:
-    flag=0
+    @st.dialog("Are you sure to update this Table")
+    def update():
+        if st.button("Submit"):
+            st.session_state.filtered_df=st.session_state.editor
     if st.session_state.filtered_df is not None and not st.session_state.filtered_df.empty:
-        copy_df=st.session_state.filtered_df.copy()
-        flag=1
+        # DataFrame is not None and not empty
+        st.session_state.editor = st.data_editor(st.session_state.filtered_df)
+        if st.button("Confirm"):
+            update()
     else:
-        copy_df=st.session_state.df.copy()
-    st.write(copy_df)
-    unique_column = copy_df.columns[0]
-    row_index = st.selectbox("Select a row:", copy_df[unique_column])
-    selected_row = copy_df[copy_df[unique_column] == row_index]
-
+        st.write(df)
+        
+with tab3:
+    if st.session_state.filtered_df is not None and not st.session_state.filtered_df.empty:
+        st.write(st.session_state.filtered_df)
+    else:
+        st.write(st.session_state.df)
+    unique_column = st.session_state.df.columns[0]
+    row_index = st.selectbox("Select a row:", st.session_state.df[unique_column])
+    selected_row = st.session_state.df[st.session_state.df[unique_column] == row_index]
+    
     # Display the selected row
     st.write(selected_row)
-
+    
     if row_index is not None:
         with st.container(border=True):  # Assuming you have a way to style the container
             st.subheader("Update Values")
@@ -524,41 +291,24 @@ with tab2:
             # for col in st.session_state.df.columns:
             st.text_input(f"Data:", value=str(selected_row[unique_column].values[0]),
                          disabled=True)
-
+    
             # Determine the column to update
             update_column = st.selectbox("Select column to update", st.session_state.df.columns)
-
+    
             value = st.text_input("New Value:")
-
+    
             if st.button('Update'):
                 try:
                     # Update the DataFrame in session state
                     st.session_state.df.loc[st.session_state.df[unique_column] == row_index, update_column] = value
-                    # if st.session_state.filtered_df is not None and not st.session_state.filtered_df.empty:
-                    #     st.session_state.filtered_df.loc[st.session_state.df[unique_column] == row_index, update_column] = value
-                    if flag==1:
-                        update_filtered_df()  # Update filtered_df after df changes
+                    if st.session_state.filtered_df is not None and not st.session_state.filtered_df.empty:
+                        st.session_state.filtered_df.loc[st.session_state.df[unique_column] == row_index, update_column] = value
                     st.success("DataFrame updated!")
                     # Display the updated dataframe.
                     st.subheader("Updated Dataframe")
                     st.write(st.session_state.df)
-                    main_table_update(update_column,unique_column,row_index,value)
                 except Exception as e:
                     st.error(f"An error occurred during update: {e}")
     else:
         st.write(st.session_state.df)
-
-with tab3:
-    @st.dialog("Are you sure to update this Table")
-    def update():
-        if st.button("Submit"):
-            st.session_state.df=st.session_state.editor  # Update filtered_df after df changes
-            st.rerun()
         
-    if st.session_state.df is not None and not st.session_state.df.empty:
-        # DataFrame is not None and not empty 
-        st.session_state.editor = st.data_editor(st.session_state.df)  # Use df here
-        if st.button("Confirm"):
-            update()
-    else:
-        st.write(st.session_state.df)

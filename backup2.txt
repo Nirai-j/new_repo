@@ -1,0 +1,199 @@
+#Method - 1 
+
+# import streamlit as st
+# import pandas as pd
+
+# # Create a title for the app
+# st.title("Dataset Upload and Filter App")
+
+# # Initialize session state variables
+# if 'df' not in st.session_state:
+#     st.session_state.df = None
+#     st.session_state.filter_values = {}
+#     st.session_state.filter_cols = []
+#     st.session_state.filter_conditions = []
+#     st.session_state.filter_inputs = []
+#     st.session_state.submit_button_clicked = False
+
+# # Create a file uploader for the dataset
+# uploaded_file = st.file_uploader("Choose a CSV or XLSX file", type=["csv", "xlsx"], key="file_uploader")
+
+# # If a file has been uploaded, process it
+# if uploaded_file is not None:
+#     # Read the CSV file into a Pandas DataFrame
+#     x = uploaded_file.name.split('.')
+#     if x[1] == 'xlsx':
+#         df = pd.read_excel(uploaded_file)
+#     else:
+#         df = pd.read_csv(uploaded_file, encoding='ISO-8859-1')
+#     st.session_state.df = df
+
+#     # Update the filter columns list and reset the submit button clicked flag
+#     st.session_state.filter_cols = list(df.columns)
+#     st.session_state.submit_button_clicked = False
+
+# # Display the original dataset
+# if st.session_state.df is not None:
+#     st.subheader("Original Dataset")
+#     st.write(st.session_state.df)
+
+#     # Create filters for the data
+#     if 'filter_cols' not in st.session_state or len(st.session_state.filter_cols) == 0:
+#         st.session_state.filter_cols = list(st.session_state.df.columns)
+    
+#     col1, col2 = st.columns(2)
+#     with col1:
+#         selected_col = st.selectbox("Select Column", options=st.session_state.filter_cols, index=0, key="select_col")
+#     with col2:
+#         filter_value = st.text_input("Enter value to filter by for column " + selected_col, value="", key="filter_value")
+
+#     if selected_col and filter_value:
+#         st.session_state.filter_values[selected_col] = filter_value
+
+#     if st.button("Add More Filters"):
+#         st.session_state.filter_conditions.append("")
+#         st.session_state.filter_cols.append("")
+#         st.session_state.filter_inputs.append("")
+
+#     for i in range(len(st.session_state.filter_conditions)):
+#         col1, col2, col3 = st.columns(3)
+#         with col1:
+#             st.session_state.filter_conditions[i] = st.selectbox(f"Condition {i+1}", options=["AND", "OR", "NOR"], key=f"condition_{i}")
+#         with col2:
+#             st.session_state.filter_cols[i] = st.selectbox(f"Column {i+1}", options=st.session_state.filter_cols, key=f"col_{i}")
+#         with col3:
+#             st.session_state.filter_inputs[i] = st.text_input(f"Value {i+1}", key=f"input_{i}")
+
+# # Apply the filters if the button has been clicked
+# if st.button("Apply Filter", key="apply_filter"):
+#     st.session_state.submit_button_clicked = True
+
+# if st.session_state.df is not None and st.session_state.submit_button_clicked:
+#     filtered_df = st.session_state.df.copy()
+#     condition_dfs = []
+
+#     if selected_col and filter_value:
+#         if st.session_state.df[selected_col].dtype == 'int64':
+#             filtered_df = filtered_df[filtered_df[selected_col] == int(filter_value)]
+#         elif st.session_state.df[selected_col].dtype == 'float64':
+#             filtered_df = filtered_df[filtered_df[selected_col] == float(filter_value)]
+#         else:
+#             filtered_df = filtered_df[filtered_df[selected_col] == str(filter_value)]
+    
+#     for i in range(len(st.session_state.filter_conditions)):
+#         condition = st.session_state.filter_conditions[i]
+#         col = st.session_state.filter_cols[i]
+#         value = st.session_state.filter_inputs[i]
+
+#         if filtered_df[col].dtype == 'int64':
+#             value = int(value)
+#         elif filtered_df[col].dtype == 'float64':
+#             value = float(value)
+#         else:
+#             value = str(value)
+
+#         condition_df = None
+#         if condition == "AND":
+#             condition_df = filtered_df[filtered_df[col] == value]
+#         elif condition == "OR":
+#             condition_df = filtered_df[filtered_df[col] == value]
+#         elif condition == "NOR":
+#             condition_df = filtered_df[filtered_df[col] != value]
+        
+#         condition_dfs.append(condition_df)
+
+#     # Apply OR and NOR conditions
+#     if condition_dfs:
+#         if "OR" in st.session_state.filter_conditions or "NOR" in st.session_state.filter_conditions:
+#             filtered_df = pd.concat(condition_dfs, axis=0).drop_duplicates().reset_index(drop=True)
+
+#     # Convert columns to their correct types
+#     for col in filtered_df.columns:
+#         if filtered_df[col].dtype == 'object':
+#             try:
+#                 filtered_df[col] = pd.to_numeric(filtered_df[col])
+#             except ValueError:
+#                 pass
+
+#     # Display the filtered dataset
+#     st.subheader("Filtered Dataset")
+#     st.write(filtered_df)
+
+#Method -2 
+
+# import streamlit as st
+# import pandas as pd
+
+# # Create a title for the app
+# st.title("Dataset Upload and Filter App")
+
+# # Initialize session state variables
+# if 'df' not in st.session_state:
+#     st.session_state.df = None
+#     st.session_state.filter_values = {}
+#     st.session_state.filter_cols = []
+#     st.session_state.submit_button_clicked = False
+
+# # Create a file uploader for the dataset
+# uploaded_file = st.file_uploader("Choose a CSV or XLSX file", type=["csv", "xlsx"], key="file_uploader")
+
+# # If a file has been uploaded, process it
+# if uploaded_file is not None:
+#     # Read the CSV file into a Pandas DataFrame
+#     x = uploaded_file.name.split('.')
+#     st.write(x)
+#     if x[1] == 'xlsx':
+#         df = pd.read_excel(uploaded_file)
+#     else:
+#         df = pd.read_csv(uploaded_file, encoding='ISO-8859-1')
+#     st.write(df.dtypes)
+#     st.session_state.df = df
+
+#     # Update the filter columns list and reset the submit button clicked flag
+#     st.session_state.filter_cols = list(df.columns)
+#     st.session_state.submit_button_clicked = False
+
+# # Display the original dataset
+# if st.session_state.df is not None:
+#     st.subheader("Original Dataset")
+#     st.write(st.session_state.df)
+
+#     # Create filters for the data
+#     if 'filter_cols' not in st.session_state or len(st.session_state.filter_cols) == 0:
+#         st.session_state.filter_cols = list(st.session_state.df.columns)
+        
+#     col1, col2 = st.columns(2)
+#     with col1:
+#         selected_col = st.selectbox("Select Column", options=st.session_state.filter_cols, index=0, key="select_col")
+#     with col2:
+#         filter_value = st.text_input("Enter value to filter by for column " + selected_col, value="", key="filter_value")
+
+#     # Update session state variables
+#     if selected_col and filter_value:
+#         st.session_state.filter_values[selected_col] = filter_value
+
+# # Apply the filters if the button has been clicked
+# if st.button("Apply Filter", key="apply_filter"):
+#     st.session_state.submit_button_clicked = True
+
+# if st.session_state.df is not None and st.session_state.submit_button_clicked:
+#     filtered_df = st.session_state.df.copy()
+#     col,value=list(st.session_state.filter_values.items())[-1]
+#     if st.session_state.df[col].dtype == 'int64':
+#         filtered_df = filtered_df[filtered_df[col] == int(value)]
+#     elif st.session_state.df[col].dtype == 'float64':
+#         filtered_df = filtered_df[filtered_df[col] == float(value)]
+#     else:
+#         filtered_df = filtered_df[filtered_df[col] == str(value)]
+
+#     # Convert columns to their correct types
+#     for col in filtered_df.columns:
+#         if filtered_df[col].dtype == 'object':
+#             try:
+#                 filtered_df[col] = pd.to_numeric(filtered_df[col])
+#             except ValueError:
+#                 pass
+
+#     # Display the filtered dataset
+#     st.subheader("Filtered Dataset")
+#     st.write(filtered_df)
