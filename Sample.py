@@ -5,7 +5,7 @@ st.markdown(
     """
     <style>
     div[data-testid="stContainer"] {
-        border: 2px solid #e6e9ef;
+        border: 2px solid red;
         padding: 20px;
         border-radius: 5px;
         margin-bottom: 20px;

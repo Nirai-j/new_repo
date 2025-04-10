@@ -15,7 +15,6 @@ if df is not None:
     gb = GridOptionsBuilder.from_dataframe(df)
     gb.configure_column("Column 0", pinned="left")
     gb.configure_column("Column 1", pinned="left")
-    gb.configure_column("Column 19", pinned="right")
     gb.configure_default_column(resizable=True, movable=True)
     gridOptions = gb.build()
     st.header("Ag-Grid with Frozen Columns")
